@@ -142,7 +142,7 @@ result = calculate_salary(101, 160, 250)
 result = calculate_employee_salary.delay(101, 160, 250)
 salary_data = result.get(timeout=30)  # получение результата
 ```
-2. 
+2. Цепочки задач (Chain)
 ```
 from celery import chain
 
@@ -153,7 +153,7 @@ workflow = chain(
 result = workflow.apply_async()
 # Сначала выполнится расчет, затем отправка письма
 ```
-3.
+3. Группы задач (Group) — параллельное выполнение
 ```
 from celery import group
 
