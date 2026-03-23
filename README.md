@@ -49,6 +49,24 @@ redis-server
 # Или через Docker
 docker run -d -p 6379:6379 redis:7-alpine
 ```
+## 📋 Справка по командам
+
+
+
+```
+# Запуск Celery worker (исполнитель задач)
+celery -A tasks worker --loglevel=info --pool=solo
+
+# Запуск демонстрации
+python main.py
+
+# Запуск мониторинга Flower (веб-интерфейс)
+celery -A tasks flower --port=5555
+
+# Запуск периодических задач (Celery Beat)
+celery -A tasks beat --loglevel=info
+```
+
 ## 📊 Примеры вывода
 
 Базовое выполнение
@@ -87,6 +105,7 @@ docker run -d -p 6379:6379 redis:7-alpine
 ✅ PDF создан: payslip_107.pdf
 ```
 
+# 🔧 Детали реализации
 ## 🔧 Структура проекта
 ```
 celery-salary-demo/
@@ -101,7 +120,6 @@ celery-salary-demo/
 ```
 
 ## 📦 Назначение файлов
-## 📦 Структура проекта
 
 | Файл | Что делает |
 |------|------------|
@@ -114,7 +132,103 @@ celery-salary-demo/
 | `.gitignore` | Исключает `__pycache__/`, `.env`, `*.pdf`, `venv/` и т.д. |
 | `README.md` | Документация проекта |
 
+## 🧠 Ключевые концепции
+1. Асинхронное выполнение (.delay())
+```
+# Синхронный вызов (блокирует выполнение)
+result = calculate_salary(101, 160, 250)
+
+# Асинхронный вызов (мгновенный возврат)
+result = calculate_employee_salary.delay(101, 160, 250)
+salary_data = result.get(timeout=30)  # получение результата
+```
+2. 
+```
+from celery import chain
+
+workflow = chain(
+    calculate_employee_salary.s(102, 150, 300),
+    send_notification.s('employee@company.com')
+)
+result = workflow.apply_async()
+# Сначала выполнится расчет, затем отправка письма
+```
+3.
+```
+from celery import group
+
+jobs = group(
+    calculate_employee_salary.s(103, 160, 280),
+    calculate_employee_salary.s(104, 168, 320)
+)
+result = jobs.apply_async()
+results = result.get()  # все результаты
+```
+4. Обработка ошибок с повторами (Retry)
+```
+@app.task(max_retries=3)
+def calculate_with_retry(employee_id, hours, rate):
+    try:
+        if hours <= 0:
+            raise ValueError("Некорректные часы")
+        return calculate_salary(employee_id, hours, rate)
+    except Exception as exc:
+        raise calculate_with_retry.retry(exc=exc, countdown=5)
+```
+5. Периодические задачи (Celery Beat)
+```
+from celery.schedules import crontab
+
+app.conf.beat_schedule = {
+    'monthly-payroll': {
+        'task': 'monthly_payroll_run',
+        'schedule': crontab(day_of_month='1', hour='9', minute='0'),
+    },
+}
+```
+
+6. Мониторинг через Flower
+```
+celery -A tasks flower --port=5555
+```
+Flower предоставляет:
+
+- 📈 Статистика по воркерам
+- 📋 Список всех задач
+- 📊 Графики выполнения
+- 🔄 Возможность повторного запуска задач
+- 👁️ Просмотр результатов
+
+## 🐛 Обработка ошибок
+Утилита корректно обрабатывает различные проблемные ситуации, выводя понятные сообщения:
 
 
+| Ситуация | Сообщение |
+|----------|-----------|
+| Redis не запущен | `❌ Ошибка подключения к Redis: [Errno 111] Connection refused` |
+| Celery worker не запущен | Задачи остаются в очереди, не выполняются |
+| Некорректные данные (отрицательные часы) | Автоматические повторы до 3 раз, затем ошибка: `Некорректное количество часов: -10` |
+| PDF файл открыт в другой программе | `❌ Ошибка: [Errno 13] Permission denied` |
+| Нет прав на запись в папку | `❌ Ошибка: [Errno 13] Permission denied` |
+| Redis подключен, но worker не отвечает | Задачи отправляются в очередь, статус `PENDING`, результат не приходит |
 
+## ⚙️ Коды возврата
+Программа возвращает следующие exit codes:
 
+| Код | Значение |
+|-----|----------|
+| 0 | Успешное выполнение (демонстрация завершена) |
+| 1 | Ошибка (Redis недоступен, worker не запущен и т.п.) |
+
+## 🎯 Заключение
+
+Celery Salary Demo — это пример того, как с помощью Celery можно организовать асинхронную обработку задач в Python. Вместо того чтобы писать собственные решения для очередей и фонового выполнения, проект использует готовый, проверенный и масштабируемый инструмент.
+
+Этот подход:
+
+- Ускоряет разработку — не нужно изобретать велосипед
+- Повышает отзывчивость — пользователь не ждет завершения длительных операций
+- Обеспечивает масштабируемость — достаточно добавить воркеры
+- Дает отказоустойчивость — задачи сохраняются в очереди
+
+Проект демонстрирует, что создание профессиональных асинхронных систем может быть быстрым, простым и даже увлекательным
