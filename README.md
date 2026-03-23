@@ -105,8 +105,12 @@ celery -A tasks beat --loglevel=info
 ✅ PDF создан: payslip_107.pdf
 ```
 
+## payslip_107.pdf
+<img width="925" height="638" alt="Снимок экрана (1089)" src="https://github.com/user-attachments/assets/6df6e3ff-38d5-4b3c-b15a-fe2570dffb0a" />
+
+
 # 🔧 Детали реализации
-## 🔧 Структура проекта
+## Структура проекта
 ```
 celery-salary-demo/
 ├── tasks.py              # Celery задачи (расчет зарплаты, уведомления, PDF)
