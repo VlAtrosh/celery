@@ -97,6 +97,9 @@ celery -A tasks beat --loglevel=info
    Сотрудник 106: 53592.0 руб.
    Общая сумма: 175044.00 руб.
 ```
+<img width="1200" height="923" alt="Снимок экрана (1091)" src="https://github.com/user-attachments/assets/95bbbf2d-b7b3-46a7-8f3b-3e582b6f0bb5" />
+
+
 Генерация PDF
 ```
 6. ГЕНЕРАЦИЯ PDF
